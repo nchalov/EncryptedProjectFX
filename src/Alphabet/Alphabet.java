@@ -1,7 +1,7 @@
 package Alphabet;
 
 public class Alphabet {
-    public static final LatinAlphabet[] LATIN = LatinAlphabet.values();
-    public static final RussianAlphabet[] RUSSIAN = RussianAlphabet.values();
+    public static final Object[] LATIN = LatinAlphabet.values();
+    public static final Object[] RUSSIAN = RussianAlphabet.values();
 
 }

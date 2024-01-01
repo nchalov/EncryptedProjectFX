@@ -8,7 +8,7 @@ public class NoMatchesException extends Exception {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Не найдено совпадений");
         alert.setHeaderText(null);
-        alert.setContentText("Пожалуйста, выберите другой стартовый ключ или убедитесь, что текст корректен");
+        alert.setContentText("Пожалуйста, убедитесь, что текст корректен");
         alert.showAndWait();
     }
 }

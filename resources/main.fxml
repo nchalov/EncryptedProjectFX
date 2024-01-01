@@ -60,12 +60,12 @@
             <Text fx:id="providedText" layoutX="152.0" layoutY="424.0" strokeType="OUTSIDE" strokeWidth="0.0" text="poweredbyNCH" />
          </children>
       </AnchorPane>
-      <Button fx:id="readBtn" layoutX="466.0" layoutY="173.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="125.0" style="-fx-background-color: #C0C0C0;" text="Выбор файла">
+      <Button fx:id="readButton" layoutX="466.0" layoutY="173.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="125.0" style="-fx-background-color: #C0C0C0;" text="Выбор файла">
          <font>
             <Font size="15.0" />
          </font>
       </Button>
-      <Button fx:id="writeBtn" layoutX="466.0" layoutY="255.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="125.0" style="-fx-background-color: #C0C0C0;" text="Выбор файла">
+      <Button fx:id="writeButton" layoutX="466.0" layoutY="255.0" mnemonicParsing="false" prefHeight="29.0" prefWidth="125.0" style="-fx-background-color: #C0C0C0;" text="Выбор файла">
          <font>
             <Font size="15.0" />
          </font>

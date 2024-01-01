@@ -1,30 +1,56 @@
 package Encryption;
+import Alphabet.Alphabet;
 import Directories.Directories;
 import Exceptions.IncorrectAlphabetException;
-import Exceptions.IncorrectFileException;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Decryption {
 
-    public String encryptedText;
-    public static boolean isChoiceDecryption;
+    private int key;
+    private Object[] alphabet;
+    private Directories directories;
+    private boolean isChoiceDecryption;
 
-    public Decryption() throws IOException {
-        encryptedText = getText(Directories.originFile);
+    public Object[] getAlphabet() {
+        return alphabet;
     }
 
-    private String toStandardCase(String text) {
+    public void setAlphabet(Object[] alphabet) {
+        this.alphabet = alphabet;
+    }
+
+    public int getKey() {
+        return key;
+    }
+
+    public void setKey(int key) {
+        this.key = key;
+    }
+
+    public boolean isChoiceDecryption() {
+        return isChoiceDecryption;
+    }
+
+    public void setChoiceEncryption(boolean choiceDecryption) {
+        isChoiceDecryption = choiceDecryption;
+    }
+
+    public void setDirectories(Directories directories) {
+        this.directories = directories;
+    }
+
+    private String toStandardCase(String text) throws IOException {
 
         StringBuilder sb = new StringBuilder();
 
-        for (int i = 0; i < encryptedText.length(); i++) {
-            char originCh = encryptedText.charAt(i);
+        for (int i = 0; i < getText(directories.getOrigin()).length(); i++) {
+            char originCh = getText(directories.getOrigin()).charAt(i);
             char textCh = text.charAt(i);
             if (Character.isUpperCase(originCh)) {
                 sb.append(Character.toUpperCase(textCh));
@@ -35,19 +61,9 @@ public class Decryption {
         return sb.toString();
     }
 
-    private boolean alphabetCheck(Object[] alphabet) {
-        String lang = "";
-        for (Object object : alphabet) {
-            lang += object;
-        }
-        boolean langMatches = lang.matches("[A-Za-z]+");
-        boolean textMatches = encryptedText.matches("[A-Za-z]+");
-        return langMatches == textMatches;
-    }
-
     private char[] getLetterArray(String text) {
         String res = "";
-        Pattern pattern = Pattern.compile("\\W+\\s?");
+        Pattern pattern = Pattern.compile("[A-Za-zА-Яа-яё_\\W]\\s?");
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {
             res += matcher.group();
@@ -73,22 +89,29 @@ public class Decryption {
         return text;
     }
 
-    public String getCaesarDecryption(int key, Object[] alphabet)
-            throws IncorrectAlphabetException {
+    private boolean isRussian() throws IOException {
+        Pattern pattern = Pattern.compile(
+                "[" + "а-яА-ЯёЁ" + "\\d" + "\\s" + "\\p{Punct}" + "]" + "*");
+        Matcher matcher = pattern.matcher(getText(directories.getOrigin()));
+        return matcher.matches();
+    }
 
-        if (!alphabetCheck(alphabet) && key == 0) {
-            throw new IncorrectAlphabetException("Выбран неверный алфавит");
+    public String getCaesarDecryption(int key, Object[] alphabet)
+            throws IncorrectAlphabetException, IOException {
+
+        if (isRussian() && Arrays.equals(alphabet, Alphabet.LATIN)) {
+            throw new IncorrectAlphabetException("Введен неверный алфавит");
+        }
+
+        if (!isRussian() && Arrays.equals(alphabet, Alphabet.RUSSIAN)) {
+            throw new IncorrectAlphabetException("Введен неверный алфавит");
         }
 
         if (key == 0) {
-            return encryptedText;
+            return getText(directories.getOrigin());
         }
 
-        if (!alphabetCheck(alphabet)) {
-            throw new IncorrectAlphabetException("Выбран неверный алфавит");
-        }
-
-        String newText = encryptedText.toLowerCase().trim();
+        String newText = getText(directories.getOrigin()).toLowerCase().trim();
         char[] letterArray = getLetterArray(newText);
         for (int i = 0; i < letterArray.length; i++) {
             char ch = letterArray[i];

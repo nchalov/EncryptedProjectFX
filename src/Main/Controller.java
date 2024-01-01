@@ -3,7 +3,7 @@ package Main;
 import Alphabet.Alphabet;
 import Directories.Directories;
 import Encryption.Bruteforce;
-import Encryption.CaesarCipher;
+import Encryption.Encryption;
 import Encryption.Decryption;
 import Exceptions.IncorrectAlphabetException;
 import Exceptions.IncorrectFileException;
@@ -11,26 +11,18 @@ import Exceptions.NoMatchesException;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 public class Controller {
 
     @FXML
     private ComboBox<String> alphabetCombobox;
-
-    @FXML
-    private AnchorPane anch2;
-
-    @FXML
-    private AnchorPane anchor1;
 
     @FXML
     private Button brutforceButton;
@@ -42,28 +34,10 @@ public class Controller {
     private Button encryptButton;
 
     @FXML
-    private ImageView image1;
-
-    @FXML
     private ComboBox<Integer> keyCombobox;
 
     @FXML
-    private ButtonBar mainButtonBar;
-
-    @FXML
-    private Pane mainPane;
-
-    @FXML
-    private Pane pane1;
-
-    @FXML
-    private Text pathTxt;
-
-    @FXML
-    private Text providedText;
-
-    @FXML
-    private Button readBtn;
+    private Button readButton;
 
     @FXML
     private TextField textReadField;
@@ -72,150 +46,230 @@ public class Controller {
     private TextField textWriteField;
 
     @FXML
-    private Rectangle rect1;
-
-    @FXML
     private Button startButton;
 
     @FXML
-    private Text subtitle;
+    private Button writeButton;
 
-    @FXML
-    private Text title;
+    private final Encryption encryption = new Encryption();
 
-    @FXML
-    private Button writeBtn;
+    private final Decryption decryption = new Decryption();
 
-    public Controller() throws IOException {
+    private final Bruteforce bruteforce = new Bruteforce();
+
+    private void startEncryption() throws IncorrectFileException, IncorrectAlphabetException {
+        try {
+            Directories directories = new Directories(textReadField.getText(), textWriteField.getText());
+            encryption.setDirectories(directories);
+            String text = encryption.getEncryption(encryption.getKey(), encryption.getAlphabet());
+            if (directories.getDestiny().length() == 0) {
+                Files.writeString(Paths.get(directories.getDestiny().toURI()), text,
+                        StandardOpenOption.APPEND);
+            } else {
+                Files.writeString(Paths.get(directories.getDestiny().toURI()), "\n" + text,
+                        StandardOpenOption.APPEND);
+            }
+            if (directories.getDestiny().equals(directories.getOrigin())) {
+                throw new IncorrectFileException("Выбран неверный файл");
+            }
+        } catch (IOException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Ошибка");
+            alert.setHeaderText(null);
+            alert.setContentText("Один или несколько файлов не были выбраны");
+            alert.showAndWait();
+        }
+    }
+
+    private void startDecryption() throws IncorrectFileException, IncorrectAlphabetException {
+        try {
+            Directories directories = new Directories(textReadField.getText(), textWriteField.getText());
+            decryption.setDirectories(directories);
+            String text = decryption.getCaesarDecryption(decryption.getKey(), decryption.getAlphabet());
+            if (directories.getDestiny().length() == 0) {
+                Files.writeString(Paths.get(directories.getDestiny().toURI()), text,
+                        StandardOpenOption.APPEND);
+            } else {
+                Files.writeString(Paths.get(directories.getDestiny().toURI()), "\n" + text,
+                        StandardOpenOption.APPEND);
+            }
+            if (directories.getDestiny().equals(directories.getOrigin())) {
+                throw new IncorrectFileException("Выбран неверный файл");
+            }
+        } catch (IOException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Ошибка");
+            alert.setHeaderText(null);
+            alert.setContentText("Один или несколько файлов не были выбраны");
+            alert.showAndWait();
+        }
+    }
+
+    private void startBruteforce() throws NoMatchesException, IncorrectAlphabetException, IncorrectFileException {
+        try {
+            Directories directories = new Directories(textReadField.getText(), textWriteField.getText());
+            bruteforce.setDirectories(directories);
+            String text = bruteforce.bruteforce(1, bruteforce.getAlphabet());
+            if (directories.getDestiny().length() == 0) {
+                Files.writeString(Paths.get(directories.getDestiny().toURI()), text,
+                        StandardOpenOption.APPEND);
+            } else {
+                Files.writeString(Paths.get(directories.getDestiny().toURI()), "\n" + text,
+                        StandardOpenOption.APPEND);
+            }
+            if (directories.getDestiny().equals(directories.getOrigin())) {
+                throw new IncorrectFileException("Выбран неверный файл");
+            }
+        } catch (IOException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Ошибка");
+            alert.setHeaderText(null);
+            alert.setContentText("Один или несколько файлов не были выбраны");
+            alert.showAndWait();
+        }
     }
 
     @FXML
     void initialize() {
-        readBtn.setOnAction(event -> {
-            readBtn.setStyle("Green");
+
+        readButton.setOnAction(event -> {
+            readButton.setStyle("Green");
             Stage stage = new Stage();
             FileChooser chooser = new FileChooser();
             chooser.getExtensionFilters().addAll(
                     new FileChooser.ExtensionFilter("Text Files", "*.txt"));
-            Directories.originFile = chooser.showOpenDialog(stage);
-            if (!textReadField.getText().isEmpty()) {
-                textReadField.deleteText(0, textReadField.getText().length());
-            }
-            if (Directories.originFile != null) {
-                textReadField.appendText(Directories.originFile.toString());
+            try {
+                textReadField.setText(chooser.showOpenDialog(stage).toString());
+            } catch (NullPointerException e) {
+                e.getMessage();
             }
         });
-        writeBtn.setOnAction(event -> {
-            writeBtn.setStyle("Green");
+
+        writeButton.setOnAction(event -> {
+            writeButton.setStyle("Green");
             Stage stage = new Stage();
             FileChooser chooser = new FileChooser();
             chooser.getExtensionFilters().addAll(
                     new FileChooser.ExtensionFilter("Text Files", "*.txt"));
-            Directories.destinyFile = chooser.showOpenDialog(stage);
-            if (!textWriteField.getText().isEmpty()) {
-                textWriteField.deleteText(0, textWriteField.getText().length());
-            }
-            if (Directories.destinyFile != null) {
-                textWriteField.appendText(Directories.destinyFile.toString());
+            try {
+                textWriteField.setText(chooser.showOpenDialog(stage).toString());
+            } catch (NullPointerException e) {
+                e.getMessage();
             }
         });
+
         startButton.setOnAction(event -> {
-            if (CaesarCipher.isChoiceEncryption) {
+            if (encryption.isChoiceEncryption()) {
                 try {
-                    Main.encryptionStart();
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Успешное выполнение программы");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Файл успешно зашифрован");
-                    alert.showAndWait();
-                } catch (IOException | IncorrectAlphabetException | IncorrectFileException e) {
+                    startEncryption();
+                    if (!textReadField.getText().isEmpty() && !textWriteField.getText().isEmpty()) {
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Успешное выполнение программы");
+                        alert.setHeaderText(null);
+                        alert.setContentText("Файл успешно зашифрован");
+                        alert.showAndWait();
+                    }
+                } catch (IncorrectFileException | IncorrectAlphabetException e) {
                     throw new RuntimeException(e);
                 }
-            } else if (Decryption.isChoiceDecryption) {
+            } else if (decryption.isChoiceDecryption()) {
                 try {
-                    Main.decryptionStart();
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Успешное выполнение программы");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Файл успешно дешифрован");
-                    alert.showAndWait();
-                } catch (IncorrectAlphabetException | IOException | IncorrectFileException e) {
+                    startDecryption();
+                    if (!textReadField.getText().isEmpty() && !textWriteField.getText().isEmpty()) {
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Успешное выполнение программы");
+                        alert.setHeaderText(null);
+                        alert.setContentText("Файл успешно дешифрован");
+                        alert.showAndWait();
+                    }
+                } catch (IncorrectAlphabetException | IncorrectFileException e) {
                     throw new RuntimeException(e);
                 }
-            } else if (Bruteforce.isChoiceBruteforce) {
+            } else if (bruteforce.isChoiceBruteforce()) {
                 try {
-                    Main.bruteforceStart();
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Успешное выполнение программы");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Файл успешно взломан");
-                    alert.showAndWait();
-                } catch (NoMatchesException | IncorrectFileException | IOException | IncorrectAlphabetException e) {
+                    startBruteforce();
+                    if (!textReadField.getText().isEmpty() && !textWriteField.getText().isEmpty()) {
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Успешное выполнение программы");
+                        alert.setHeaderText(null);
+                        alert.setContentText("Файл успешно взломан");
+                        alert.showAndWait();
+                    }
+                } catch (NoMatchesException | IncorrectFileException | IncorrectAlphabetException e) {
                     throw new RuntimeException(e);
                 }
             }
-            if ((!CaesarCipher.isChoiceEncryption) && (!Decryption.isChoiceDecryption) && (!Bruteforce.isChoiceBruteforce)) {
+            if (!encryption.isChoiceEncryption() && (!decryption.isChoiceDecryption()) && (!bruteforce.isChoiceBruteforce())) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Ошибка");
                 alert.setHeaderText(null);
                 alert.setContentText("Опция не выбрана");
                 alert.showAndWait();
             }
-            if (Directories.originFile == null || Directories.destinyFile == null) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Ошибка");
-                alert.setHeaderText(null);
-                alert.setContentText("Файл не выбран");
-                alert.showAndWait();
-            }
         });
+
         cipherButton.setOnAction(actionEvent -> {
-            CaesarCipher.isChoiceEncryption = true;
-            Decryption.isChoiceDecryption = false;
-            Bruteforce.isChoiceBruteforce = false;
+            encryption.setChoiceEncryption(true);
+            decryption.setChoiceEncryption(false);
+            bruteforce.setChoiceBruteforce(false);
             cipherButton.setStyle("Green");
             keyCombobox.setDisable(false);
 
         });
+
         encryptButton.setOnAction(actionEvent -> {
-            CaesarCipher.isChoiceEncryption = false;
-            Decryption.isChoiceDecryption = true;
-            Bruteforce.isChoiceBruteforce = false;
+            encryption.setChoiceEncryption(false);
+            decryption.setChoiceEncryption(true);
+            bruteforce.setChoiceBruteforce(false);
             encryptButton.setStyle("Green");
             keyCombobox.setDisable(false);
         });
+
         brutforceButton.setOnAction(actionEvent -> {
-            CaesarCipher.isChoiceEncryption = false;
-            Decryption.isChoiceDecryption = false;
-            Bruteforce.isChoiceBruteforce = true;
+            encryption.setChoiceEncryption(false);
+            decryption.setChoiceEncryption(false);
+            bruteforce.setChoiceBruteforce(true);
             brutforceButton.setStyle("Green");
             keyCombobox.setDisable(true);
         });
+
         alphabetCombobox.setItems(FXCollections.observableArrayList("Кириллица", "Латиница"));
         if (alphabetCombobox.getSelectionModel().getSelectedItem() == null) {
-            CaesarCipher.alphabet = Alphabet.RUSSIAN;
-            CaesarCipher.key = 0;
+            encryption.setAlphabet(Alphabet.RUSSIAN);
+            decryption.setAlphabet(Alphabet.RUSSIAN);
+            bruteforce.setAlphabet(Alphabet.RUSSIAN);
+            encryption.setKey(0);
+            decryption.setKey(0);
             keyCombobox.setItems(FXCollections.observableArrayList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
                     13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32));
         }
         alphabetCombobox.setOnAction(actionEvent -> {
             keyCombobox.setValue(0);
             if (alphabetCombobox.getSelectionModel().getSelectedItem().equals("Кириллица")) {
-                CaesarCipher.alphabet = Alphabet.RUSSIAN;
+                encryption.setAlphabet(Alphabet.RUSSIAN);
+                decryption.setAlphabet(Alphabet.RUSSIAN);
+                bruteforce.setAlphabet(Alphabet.RUSSIAN);
                 keyCombobox.setItems(FXCollections.observableArrayList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
                         13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32));
             } else if (alphabetCombobox.getSelectionModel().getSelectedItem().equals("Латиница")) {
-                CaesarCipher.alphabet = Alphabet.LATIN;
+                encryption.setAlphabet(Alphabet.LATIN);
+                decryption.setAlphabet(Alphabet.LATIN);
+                bruteforce.setAlphabet(Alphabet.LATIN);
                 keyCombobox.setItems(FXCollections.observableArrayList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
                         11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25));
             }
         });
         keyCombobox.setOnAction(actionEvent -> {
             if (keyCombobox.getSelectionModel().getSelectedItem() != null) {
-                CaesarCipher.key = keyCombobox.getSelectionModel().getSelectedItem();
+                encryption.setKey(keyCombobox.getSelectionModel().getSelectedItem());
+                decryption.setKey(keyCombobox.getSelectionModel().getSelectedItem());
             }
         });
     }
 }
+
+
+
+
 
 
